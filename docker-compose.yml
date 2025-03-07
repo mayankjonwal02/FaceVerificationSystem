@@ -1,0 +1,63 @@
+services:
+  frontalface:
+    build: ./FaceOrientationBackend
+    image: mayankjonwal02/iitj_face_verification_backend-frontalface
+    container_name: frontalface
+    ports:
+      - "8001:8001"
+    networks:
+      - backend_network
+
+  web:
+    build: ./libraryproject
+    image: mayankjonwal02/iitj_face_verification_backend-web
+    container_name: web
+    command: ["sh", "-c", "python manage.py migrate && gunicorn libraryproject.wsgi:application --bind 0.0.0.0:8000 --timeout 120"]
+    volumes:
+      - ./libraryproject:/app
+    depends_on:
+      - frontalface
+      - db
+    environment:
+      - DB_HOST=db  # If DB_HOST is still pointing to a database, ensure it's properly configured or remove this if unnecessary
+      - DB_NAME=LibraryUsers
+      - DB_USER=root
+      - DB_PASS=password
+    
+    ports:
+      - "8000:8000"
+    networks:
+      - backend_network
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - "8003:8003"
+    depends_on:
+      - web
+    networks:
+      - backend_network
+
+  db:
+    build: ./MongoDB
+    image: mayankjonwal02/iitj_face_verification_backend-db
+    container_name: db
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: LibraryUsers
+
+    networks:
+      - backend_network
+
+volumes:
+  mysql_data:
+
+networks:
+  backend_network:
+    driver: bridge

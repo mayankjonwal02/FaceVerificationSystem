@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Capture and Upload</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.3/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen p-6">
+
+    <h1 class="text-2xl font-bold mb-6">Capture Image and Upload</h1>
+
+    <div class="flex flex-col items-center bg-white p-6 rounded-lg shadow-lg">
+        <input type="text" id="idInput" placeholder="Enter ID" required class="mb-4 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <input type="text" id="typeInput" placeholder="Image Type (clicked or scanned)" required class="mb-4 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+
+        <div class="flex space-x-4 mb-4">
+            <video id="video" autoplay class="border border-gray-300 rounded-lg"></video>
+            <canvas id="canvas" width="320" height="240" class="hidden"></canvas>
+        </div>
+
+        <div class="flex space-x-4 mb-4">
+            <button id="capture" class="bg-blue-500 text-white px-4 py-2 rounded-md shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">Capture</button>
+            <button id="upload" class="bg-green-500 text-white px-4 py-2 rounded-md shadow-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500">Upload</button>
+        </div>
+
+        <div id="message" class="text-lg font-medium text-gray-700"></div>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const captureButton = document.getElementById('capture');
+        const uploadButton = document.getElementById('upload');
+        const messageDiv = document.getElementById('message');
+        const imagetype = document.getElementById('typeInput');
+
+        // Get access to the camera
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: true }).then(function(stream) {
+                video.srcObject = stream;
+                video.play();
+            }).catch(error => {
+                messageDiv.textContent = `Error accessing camera: ${error}`;
+            });
+        }
+
+        // Capture the image
+        captureButton.addEventListener('click', function() {
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, 320, 240);
+            messageDiv.textContent = 'Image captured. Ready to upload.';
+        });
+
+        // Upload the image
+        uploadButton.addEventListener('click', function() {
+            messageDiv.textContent = 'Uploading...';
+            const id = document.getElementById('idInput').value;
+            if (!id) {
+                alert('ID is required');
+                return;
+            }
+
+            canvas.toBlob(function(blob) {
+                const formData = new FormData();
+                formData.append('id', id);
+                formData.append('image', blob, 'capture.jpg');
+                formData.append('imagetype', imagetype.value);
+
+                fetch('/register/', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        console.log("error from response");
+                        console.log(data.error);
+                        messageDiv.textContent = `Error: ${data.error}`;
+                    } else {
+                        messageDiv.textContent = 'Data inserted successfully';
+                    }
+                })
+                .catch(error => {
+                    console.log("error from catch");
+                    console.log(error);
+                    if (error == "TypeError: Failed to fetch") {
+                        messageDiv.textContent = `Error: ${error}`;
+                    }
+                    else {
+                        messageDiv.textContent = `Got an Error`;
+                    }
+                    
+                });
+            }, 'image/jpeg');
+        });
+    </script>
+</body>
+</html>

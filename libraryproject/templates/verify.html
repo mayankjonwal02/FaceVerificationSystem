@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Capture and Upload</title>
+    <style>
+        #video, #canvas {
+            width: 320px;
+            height: 240px;
+            border: 1px solid black;
+            margin: 10px;
+        }
+        #container {
+            display: flex;
+            align-items: center;
+        }
+        #canvas {
+            display: block; /* Show the canvas */
+        }
+    </style>
+</head>
+<body>
+    <h1>Capture Image and Upload</h1>
+    
+    <div id="container">
+        <video id="video" autoplay></video>
+        <canvas id="canvas" width="320" height="240"></canvas>
+    </div>
+    <!-- <input type="text" id="userId" placeholder="Enter ID" /> -->
+    <button id="capture">Capture</button>
+    <button id="upload">Upload</button> 
+    <div id="message"></div>
+    
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const captureButton = document.getElementById('capture');
+        const uploadButton = document.getElementById('upload');
+        const messageDiv = document.getElementById('message');
+        // const userIdInput = document.getElementById('userId');
+        
+        // Get access to the camera
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: true }).then(function(stream) {
+                video.srcObject = stream;
+                video.play();
+            });
+        }
+
+        // Capture the image
+        captureButton.addEventListener('click', function() {
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, 320, 240);
+        });
+
+        // Upload the image
+        uploadButton.addEventListener('click', function() {
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, 320, 240);
+            messageDiv.textContent = 'Uploading...';
+
+            canvas.toBlob(function(blob) {
+                const formData = new FormData();
+                
+
+                formData.append('image', blob, 'capture.jpg');
+             
+
+                fetch('/verify/', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.recognition) {
+                        messageDiv.textContent = `Verified: ${data.recognition}`;
+                    } else if (data.error) {
+                        messageDiv.textContent = `Error: ${data.error}`;
+                    } else {
+                        messageDiv.textContent = 'Unknown Error';
+                    }
+                })
+                .catch(error => {
+                    messageDiv.textContent = `Error: ${error}`;
+                });
+            }, 'image/jpeg');
+        });
+    </script>
+</body>
+</html>
