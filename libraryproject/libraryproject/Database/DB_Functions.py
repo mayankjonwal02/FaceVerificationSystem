@@ -35,17 +35,15 @@ def update_user(user):
 
 def convert_image_to_embedding(image):
 
-    # img_array = np.array(image)
-    # print("hello")
-    # embedding = face_encodings(img_array)[0]
+    try:
+        img_array = np.array(image)
+        print("hello")
+        embedding = face_encodings(img_array)[0]
 
-    # return embedding
-    img = image.convert('RGB')
-    img_array = np.array(img)
-    encodings = face_encodings(img_array)
-    if not encodings:
-        raise ValueError("No face encoding found")
-    return encodings[0]
+        return embedding
+    except Exception as e:
+        print(e)
+        return None
 
 def get_all_embeddings():
     if cache.get("embeddings") and cache.get("user_ids"):
