@@ -33,7 +33,7 @@ def count_faces(image):
 
     # Initialize the final list of filtered faces
     final_faces = []
-    min_face_size = 130  # Minimum face size in pixels (width or height)
+    min_face_size = 300  # Minimum face size in pixels (width or height)
     max_face_size = 500  # Maximum face size in pixels (width or height)
     print(faceLocations)
 

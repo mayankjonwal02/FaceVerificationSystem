@@ -54,46 +54,46 @@ class RegisterView(APIView):
                 return JsonResponse({'error': 'User already exists'}, status=status.HTTP_400_BAD_REQUEST)
 
             
-            if imagetype == 'clicked':
-                multipart_data = MultipartEncoder(
+            # if imagetype == 'clicked':
+            multipart_data = MultipartEncoder(
                         fields={
                             'image': (image.name, image, image.content_type),
                         
                         }
                     )
-                headers = {'Content-Type': multipart_data.content_type}
-                internal_api_url = "http://frontalface:8001/isFront"
-                response = requests.post(internal_api_url, data=multipart_data, headers=headers)
-                print(response.content)
-                if response.status_code == 200:
-                    data = response.json()
-                    print(data)
-                    if data['front'] == False:
-                        return JsonResponse({'error': 'Look in camera'}, status=status.HTTP_400_BAD_REQUEST)
+            headers = {'Content-Type': multipart_data.content_type}
+            internal_api_url = "http://frontalface:8001/isFront"
+            response = requests.post(internal_api_url, data=multipart_data, headers=headers)
+            print(response.content)
+            if response.status_code == 200:
+                data = response.json()
+                print(data)
+                if data['front'] == False:
+                    return JsonResponse({'error': 'Look in camera'}, status=status.HTTP_400_BAD_REQUEST)
 
 
             img =Image.open(image)
             img = img.resize((1200, 800), Image.LANCZOS)
 
             
-            if imagetype == "clicked":
-                count , face_size , face = count_faces(img)
-                if(count == 0):
-                    return JsonResponse({'error': 'No face found',"verified": False}, status=status.HTTP_400_BAD_REQUEST)
-                else:
-                    (x, y, w, h) = face_size
+            # if imagetype == "clicked":
+            count , face_size , face = count_faces(img)
+            if(count == 0):
+                return JsonResponse({'error': 'No face found',"verified": False}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                (x, y, w, h) = face_size
             
                     
-                    min_face_size = 130 
-                    max_face_size = 500
-                    print(x,y,w,h)
+                min_face_size = 170
+                max_face_size = 500
+                print(x,y,w,h)
                     
-                    if w < min_face_size or h < min_face_size :
-                        return JsonResponse({'error': 'please stand closer to camera',"verified": False}, status=status.HTTP_400_BAD_REQUEST)
-                    if w > max_face_size or h > max_face_size:
-                        return JsonResponse({'error': 'please stand further from camera',"verified": False}, status=status.HTTP_400_BAD_REQUEST)
-                    else :
-                        img = face
+                if w < min_face_size or h < min_face_size :
+                    return JsonResponse({'error': 'please stand closer to camera',"verified": False,"Face Size": f"{w} x {h}"}, status=status.HTTP_400_BAD_REQUEST)
+                if w > max_face_size or h > max_face_size:
+                    return JsonResponse({'error': 'please stand further from camera',"verified": False,"Face Size": f"{w} x {h}"}, status=status.HTTP_400_BAD_REQUEST)
+                else :
+                    img = face
                 
 
 
@@ -118,7 +118,7 @@ class RegisterView(APIView):
                 return JsonResponse({'error': 'Face already exists'}, status=status.HTTP_400_BAD_REQUEST)
 
             DB_Functions.updateCache()
-            return JsonResponse({'message': 'Data inserted successfully'}, status=status.HTTP_201_CREATED)
+            return JsonResponse({'message': 'Data inserted successfully',"Face Size": f"{w} x {h}"}, status=status.HTTP_201_CREATED)
 
         except Exception as e:            
             return JsonResponse({'error': "There is an error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -192,16 +192,16 @@ class VerifyView(APIView):
                 return JsonResponse({'error': 'No face found',"verified": False}, status=status.HTTP_400_BAD_REQUEST)
             else:
                 (x, y, w, h) = face_size
-        
+                print("face size",w,h)
                 
-                min_face_size = 130 
+                min_face_size = 170
                 max_face_size = 500
-                print(x,y,w,h)
+                
                 
                 if w < min_face_size or h < min_face_size :
-                    return JsonResponse({'error': 'please stand closer to camera',"verified": False}, status=status.HTTP_400_BAD_REQUEST)
+                    return JsonResponse({'error': 'please stand closer to camera',"verified": False,"Face Size": f"{w} x {h}"}, status=status.HTTP_400_BAD_REQUEST)
                 if w > max_face_size or h > max_face_size:
-                    return JsonResponse({'error': 'please stand further from camera',"verified": False}, status=status.HTTP_400_BAD_REQUEST)
+                    return JsonResponse({'error': 'please stand further from camera',"verified": False,"Face Size": f"{w} x {h}"}, status=status.HTTP_400_BAD_REQUEST)
                 else :
                     img = face
 
@@ -214,7 +214,7 @@ class VerifyView(APIView):
                 recognition = recognize_face(embeddings,target_embedding)
 
                 if recognition == -1:
-                    return JsonResponse({'message': 'Image received successfully!', 'recognition': 'Unknown',"verified": False})
+                    return JsonResponse({'message': 'Image received successfully!', 'recognition': 'Unknown',"verified": False,"Face Size": f"{w} x {h}"})
                 else:
                     user = DB_Functions.get_user(user_ids[recognition])
                     thread = threading.Thread(target=update_embeddings_by_user, args=(user,target_embedding))
@@ -225,7 +225,7 @@ class VerifyView(APIView):
                     # user_embeddings = user.faceembeddings
                     
 
-                    return JsonResponse({'message': 'Image received successfully!', 'recognition': user_ids[recognition],"verified": True})
+                    return JsonResponse({'message': 'Image received successfully!', 'recognition': user_ids[recognition],"verified": True,"Face Size": f"{w} x {h}"})
             except ValueError as e:
                 print("error from function",e)
                 return JsonResponse({'message': 'Image received successfully!', 'error': str(e), 'recognition': 'Unknown',"verified": False})
