@@ -39,9 +39,9 @@ def is_face_front_center(image):
             nose_to_left = nose_tip.x - left_eye.x
             nose_to_right = right_eye.x - nose_tip.x
             
-            if nose_to_left < 0.70 * eye_distance:
+            if nose_to_left < 0.35 * eye_distance:
                 horizontal_direction = "Left"
-            elif nose_to_right < 0.70 * eye_distance:
+            elif nose_to_right < 0.35 * eye_distance:
                 horizontal_direction = "Right"
             else:
                 horizontal_direction = "Front"
@@ -51,9 +51,9 @@ def is_face_front_center(image):
             mouth_y = (left_mouth.y + right_mouth.y) / 2
             vertical_range = mouth_y - eye_y
             
-            if nose_tip.y < eye_y + 0.40 * vertical_range:
+            if nose_tip.y < eye_y + 0.05 * vertical_range:
                 vertical_direction = "Up"
-            elif nose_tip.y > mouth_y - 0.40 * vertical_range:
+            elif nose_tip.y > mouth_y - 0.05 * vertical_range:
                 vertical_direction = "Down"
             else:
                 vertical_direction = "Center"
